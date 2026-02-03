@@ -333,19 +333,25 @@ class TradingEngine:
             logger.error("진입 방향 결정 실패: long_ok=%s short_ok=%s", long_ok, short_ok)
             return
         
-        sl_dist = atr * config.SL_ATR_MULT
+        test_tp_sl = getattr(config, "TEST_MODE", False) and getattr(config, "TEST_ENTRY_OVERRIDE", False)
+        sl_mult = getattr(config, "TEST_SL_ATR_MULT", config.SL_ATR_MULT) if test_tp_sl else config.SL_ATR_MULT
+        rr_ratio = getattr(config, "TEST_RR_RATIO", config.RR_RATIO) if test_tp_sl else config.RR_RATIO
+        tp1_ratio = getattr(config, "TEST_TP1_RATIO_OF_TP", config.TP1_RATIO_OF_TP) if test_tp_sl else config.TP1_RATIO_OF_TP
+        tp2_ratio = getattr(config, "TEST_TP2_RATIO_OF_TP", config.TP2_RATIO_OF_TP) if test_tp_sl else config.TP2_RATIO_OF_TP
+
+        sl_dist = atr * sl_mult
         if side == "long":
             sl_price = close - sl_dist
-            tp_price = close + sl_dist * config.RR_RATIO
+            tp_price = close + sl_dist * rr_ratio
         else:  # short
             sl_price = close + sl_dist
-            tp_price = close - sl_dist * config.RR_RATIO
-        
-        logger.info("진입 방향 결정: side=%s (long_ok=%s short_ok=%s)", side, long_ok, short_ok)
+            tp_price = close - sl_dist * rr_ratio
+
+        logger.info("진입 방향 결정: side=%s (long_ok=%s short_ok=%s)%s", side, long_ok, short_ok, " [테스트 TP/SL]" if test_tp_sl else "")
 
         full_tp_pct = abs(tp_price - close) / close * 100.0
-        tp1_pct = full_tp_pct * (config.TP1_RATIO_OF_TP / 100.0)
-        tp2_pct = full_tp_pct * (config.TP2_RATIO_OF_TP / 100.0)
+        tp1_pct = full_tp_pct * (tp1_ratio / 100.0)
+        tp2_pct = full_tp_pct * (tp2_ratio / 100.0)
         if side == "long":
             tp1_price = close * (1 + tp1_pct / 100.0)
             tp2_price = close * (1 + tp2_pct / 100.0)
