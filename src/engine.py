@@ -517,6 +517,13 @@ class TradingEngine:
         # ----- 청산 감지: 이전에는 포지션이 있었는데 지금 없음 (손절/익절/브레이크이븐) -----
         # _entry_side가 있으면 이 엔진이 진입·TP/SL을 등록한 포지션 → 청산 시 알림
         closed = pos is None and (self._had_position_last_run or self._entry_side is not None)
+        if pos is None:
+            logger.info(
+                "포지션 없음 → 청산 감지 조건: had_pos=%s entry_side=%s → 알림전송=%s",
+                self._had_position_last_run,
+                self._entry_side,
+                closed,
+            )
         if closed:
             close_price = self.client.get_last_price()
             if self._breakeven_done:
