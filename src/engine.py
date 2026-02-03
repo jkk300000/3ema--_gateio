@@ -504,17 +504,22 @@ class TradingEngine:
         """한 사이클: 포지션 확인, 실패한 주문 확인, 브레이크이븐 체크.
         진입 조건 체크는 별도 스레드에서 30분 봉 완성 시점에만 실행."""
         pos = self.client.get_position()
+        # 포지션이 있으면 즉시 기록 (이후 예외가 나도 다음 사이클에서 청산 감지 가능)
+        if pos is not None:
+            self._had_position_last_run = True
 
         # ----- 청산 감지: 이전에는 포지션이 있었는데 지금 없음 -----
         if self._had_position_last_run and pos is None:
             close_price = self.client.get_last_price()
             if self._breakeven_done:
+                logger.info("청산 감지(브레이크이븐 청산) → Discord 알림 전송 side=%s close_price=%s", self._entry_side, close_price)
                 notify_discord(
                     "breakeven_closed",
                     side=self._entry_side,
                     close_price=close_price,
                 )
             else:
+                logger.info("청산 감지 → Discord 알림 전송 side=%s close_price=%s", self._entry_side, close_price)
                 notify_discord(
                     "close",
                     side=self._entry_side,
