@@ -72,9 +72,9 @@ DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
 
 # --- 테스트용: 진입/청산 메소드만 검증할 때 ---
 # True면 진입 조건(EMA·캔들패턴) 무시하고, 완성된 30봉마다 지정 방향으로 최소 수량(1계약) 진입
-TEST_MODE = True
-TEST_ENTRY_OVERRIDE = True   # TEST_MODE일 때만 의미 있음 (둘 다 True여야 진입 조건 무시)
-TEST_ENTRY_SIDE = "short"     # "long" 또는 "short"
+TEST_MODE = False
+TEST_ENTRY_OVERRIDE = False  # TEST_MODE일 때만 의미 있음 (둘 다 True여야 진입 조건 무시)
+TEST_ENTRY_SIDE = "long"     # "long" 또는 "short"
 # 테스트 모드일 때 TP/SL·부분익절을 가깝게 해서 빠르게 체결 (실거래 비율보다 작게)
 TEST_SL_ATR_MULT = 1       # SL 거리 축소 (기본 3.0 → 0.5)
 TEST_RR_RATIO = 0.5          # 최종 익절 배율 축소 (기본 6.6 → 0.2)
