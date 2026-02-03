@@ -66,8 +66,12 @@ ENTRY_CHECK_ONLY_ON_BAR_CLOSE = True
 # 포지션 확인: 진입 신호 발생 후에만 확인 시작, 진입 확인되면 중단, 청산 전까지
 POSITION_CHECK_AFTER_SIGNAL_ONLY = True
 
+# Discord 알림 (선택)
+# .env에 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/... 설정 시 알림 전송
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
+
 # --- 테스트용: 진입/청산 메소드만 검증할 때 ---
 # True면 진입 조건(EMA·캔들패턴) 무시하고, 완성된 30봉마다 지정 방향으로 최소 수량(1계약) 진입
-TEST_MODE = True
+TEST_MODE = True  
 TEST_ENTRY_OVERRIDE = True   # TEST_MODE일 때만 의미 있음 (둘 다 True여야 진입 조건 무시)
 TEST_ENTRY_SIDE = "long"     # "long" 또는 "short"

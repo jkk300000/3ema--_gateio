@@ -1,5 +1,5 @@
-#!/bin/bash
-# systemd 서비스 등록 (선택 사항)
+#!/usr/bin/env bash
+# Linux systemd 서비스 등록 (선택 사항)
 # 사용법: sudo ./scripts/install_service.sh
 # 서비스 이름: ema-gateio.service
 

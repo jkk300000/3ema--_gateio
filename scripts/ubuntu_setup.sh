@@ -1,6 +1,7 @@
-#!/bin/bash
-# Ubuntu 24.04 LTS x64 - EMA 캔들패턴 전략 설치 스크립트
+#!/usr/bin/env bash
+# Ubuntu / Debian Linux - EMA 캔들패턴 전략 설치 스크립트
 # 사용법: chmod +x scripts/ubuntu_setup.sh && ./scripts/ubuntu_setup.sh
+# (프로젝트 루트 디렉터리에서 실행)
 
 set -e
 

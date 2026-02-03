@@ -1,0 +1,4 @@
+# Linux/Ubuntu에서 스크립트 실행 시 CRLF 문제 방지
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf

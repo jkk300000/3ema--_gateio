@@ -21,6 +21,7 @@ import config
 from src.api.gate_client import GateFuturesClient
 from src.strategy.indicators import add_indicators
 from src.strategy.signals import check_entry
+from src.notify.discord import notify_discord
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,7 @@ class TradingEngine:
         self._skip_next: bool = False
         self._partial_tp1_done: bool = False
         self._partial_tp2_done: bool = False
+        self._partial_tp1_notified: bool = False  # Discord 부분 익절 알림용 (TP1/TP2 구분)
         # 30분마다 지표 로그: 마지막으로 로그한 봉의 timestamp
         self._last_indicators_logged_ts: Optional[int] = None
         # 브레이크이븐 체크 스레드 제어
@@ -67,6 +69,9 @@ class TradingEngine:
         self._entry_check_lock = threading.Lock()  # 진입 체크 중복 실행 방지
         # 마지막으로 처리한 완성된 봉의 종료 시각 (새 봉 완성 감지용)
         self._last_processed_bar_end_ts: Optional[int] = None
+        # Discord/청산 감지: 이전 사이클에 포지션이 있었는지, 이전 포지션 수량
+        self._had_position_last_run: bool = False
+        self._last_position_size: Optional[float] = None
 
     def _current_bar_start_ts(self) -> int:
         """현재 시간 기준 이번 30분봉 시작 시각 (Unix sec)."""
@@ -427,6 +432,18 @@ class TradingEngine:
                     self._tp_sl_set = True
                     self._waiting_for_position = False
                     logger.info("TP/SL 등록 완료")
+                    self._partial_tp1_notified = False
+                    # Discord: 진입 알림
+                    notify_discord(
+                        "entry",
+                        side=self._entry_side,
+                        entry_price=self._entry_price,
+                        sl_price=self._sl_price,
+                        tp_price=self._tp_price,
+                        tp1_price=self._tp1_price,
+                        tp2_price=self._tp2_price,
+                        size=size_str_pos,
+                    )
                 except Exception as e:
                     logger.exception("TP/SL 등록 실패: %s", e)
                     # TP/SL 등록 실패 시 상태 초기화 (다음 진입 시도 가능하도록)
@@ -486,8 +503,60 @@ class TradingEngine:
     def run_once(self) -> None:
         """한 사이클: 포지션 확인, 실패한 주문 확인, 브레이크이븐 체크.
         진입 조건 체크는 별도 스레드에서 30분 봉 완성 시점에만 실행."""
-        # ----- 포지션 있음: 진입 직후면 TP/SL 등록, 이후 브레이크이븐만 처리 -----
         pos = self.client.get_position()
+
+        # ----- 청산 감지: 이전에는 포지션이 있었는데 지금 없음 -----
+        if self._had_position_last_run and pos is None:
+            close_price = self.client.get_last_price()
+            if self._breakeven_done:
+                notify_discord(
+                    "breakeven_closed",
+                    side=self._entry_side,
+                    close_price=close_price,
+                )
+            else:
+                notify_discord(
+                    "close",
+                    side=self._entry_side,
+                    close_price=close_price,
+                )
+            self._entry_side = None
+            self._entry_price = None
+            self._entry_size = None
+            self._sl_price = None
+            self._tp_price = None
+            self._tp1_price = None
+            self._tp2_price = None
+            self._tp_sl_set = False
+            self._breakeven_done = False
+            self._entry_timestamp = None
+            self._last_position_size = None
+            self._partial_tp1_notified = False
+        self._had_position_last_run = (pos is not None)
+        if pos is None:
+            self._last_position_size = None
+            return
+
+        # ----- 포지션 있음: 부분 익절 감지 후, 진입 직후면 TP/SL 등록, 실패 주문 확인, 브레이크이븐 -----
+        pos_size_abs = abs(pos["size"])
+        if self._last_position_size is not None and pos_size_abs < self._last_position_size:
+            # 포지션 수량 감소 = 부분 익절 발생
+            fill_price = self.client.get_last_price()
+            extra = ""
+            if self._tp1_price is not None and self._tp2_price is not None:
+                if not self._partial_tp1_notified:
+                    extra = "(TP1 추정)"
+                    self._partial_tp1_notified = True
+                else:
+                    extra = "(TP2 추정)"
+            notify_discord(
+                "partial_tp",
+                side=pos["side"],
+                close_price=fill_price,
+                extra=extra.strip(),
+            )
+        self._last_position_size = pos_size_abs
+
         if pos:
             logger.info("포지션 보유: %s size=%s entry=%.2f", pos["side"], pos["size"], pos["entry_price"])
             # 실패한 트리거 주문 확인 (이메일 알림 대신 로그로 확인, 중복 로그 방지)
@@ -870,6 +939,12 @@ class TradingEngine:
                             self._breakeven_in_progress = False  # 진행 중 플래그 해제
                             logger.info("브레이크이븐 완료: SL을 %.2f(원래진입가=%.2f, 반올림=%s)로 이동 완료", 
                                       breakeven_sl_price, actual_entry_price, rounded_entry_price)
+                            # Discord: 브레이크이븐 동작 알림
+                            notify_discord(
+                                "breakeven_applied",
+                                side=use_side,
+                                entry_price=actual_entry_price,
+                            )
                         except Exception as e:
                             logger.error("브레이크이븐: SL 재등록 실패 side=%s trigger_price=%s size=%s 오류=%s", 
                                        use_side, entry_price_str, size_recheck, e)
