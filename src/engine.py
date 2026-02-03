@@ -514,8 +514,10 @@ class TradingEngine:
         if pos is not None:
             self._had_position_last_run = True
 
-        # ----- 청산 감지: 이전에는 포지션이 있었는데 지금 없음 -----
-        if self._had_position_last_run and pos is None:
+        # ----- 청산 감지: 이전에는 포지션이 있었는데 지금 없음 (손절/익절/브레이크이븐) -----
+        # _entry_side가 있으면 이 엔진이 진입·TP/SL을 등록한 포지션 → 청산 시 알림
+        closed = pos is None and (self._had_position_last_run or self._entry_side is not None)
+        if closed:
             close_price = self.client.get_last_price()
             if self._breakeven_done:
                 logger.info("청산 감지(브레이크이븐 청산) → Discord 알림 전송 side=%s close_price=%s", self._entry_side, close_price)
@@ -525,7 +527,7 @@ class TradingEngine:
                     close_price=close_price,
                 )
             else:
-                logger.info("청산 감지 → Discord 알림 전송 side=%s close_price=%s", self._entry_side, close_price)
+                logger.info("청산 감지(손절/익절) → Discord 알림 전송 side=%s close_price=%s", self._entry_side, close_price)
                 notify_discord(
                     "close",
                     side=self._entry_side,
