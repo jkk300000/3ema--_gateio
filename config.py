@@ -50,9 +50,9 @@ MAX_RISK_PCT = 4.2
 # 부분 익절 (진입가 대비 최종 TP %의 비율)
 ENABLE_PARTIAL_TP = True
 TP1_RATIO_OF_TP = 35.0   # TP1 = fullTpPct * 35%
-TP1_CLOSE_PCT = 15.0     # 포지션의 15% 청산
+TP1_CLOSE_PCT = 10.0     # 포지션의 15% 청산
 TP2_RATIO_OF_TP = 40.0
-TP2_CLOSE_PCT = 15.0     # 남은 포지션의 15%
+TP2_CLOSE_PCT = 10.0     # 남은 포지션의 15%
 
 # 브레이크이븐 (시간 기준: 진입 후 N분 경과 시 손절가를 진입가로 이동)
 ENABLE_BREAKEVEN = True
