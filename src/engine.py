@@ -185,9 +185,10 @@ class TradingEngine:
                         
                         # 새 봉이 완성되었는지 확인
                         if self._last_processed_bar_end_ts is None:
-                            # 첫 실행: 현재 봉 시작 시각을 기준으로 이전 봉 종료 시각 설정
-                            # (현재 봉이 아직 완성되지 않았으므로, 이전 봉 종료 시각 = 현재 봉 시작 시각)
-                            self._last_processed_bar_end_ts = current_bar_start
+                            # 재시작 직후: 현재 봉이 닫힐 때까지 진입 체크 스킵 (다음 봉 완성 시점에만 1회 실행)
+                            # current_bar_start로 두면 12:29 재시작 시 12:00~12:30 구간 전체가 "완성"으로 인식되어 즉시 진입함
+                            self._last_processed_bar_end_ts = current_bar_end
+                            logger.debug("진입 체크: 재시작 후 첫 사이클, 다음 봉 완성 시(%.0f)까지 대기", current_bar_end)
                         
                         # 이전에 처리한 봉의 종료 시각이 지났고, 아직 현재 봉 종료 시각 전이면 새 봉 완성
                         # 예: 이전 봉이 12:00-12:30이면, 12:30 이후에 완성됨
