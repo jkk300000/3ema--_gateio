@@ -27,8 +27,8 @@ logger = logging.getLogger(__name__)
 
 # 30분 = 1800초
 BAR_SECONDS = config.CHART_BAR_MINUTES * 60
-# 브레이크이븐: 진입 시각 기준 N시간 경과 시 적용
-BREAKEVEN_SECONDS = int(config.BREAKEVEN_HOURS * 3600)
+# 브레이크이븐: 진입 시각 기준 N분 경과 시 적용
+BREAKEVEN_SECONDS = int(getattr(config, "BREAKEVEN_MINUTES", 500) * 60)
 
 
 class TradingEngine:

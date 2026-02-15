@@ -54,10 +54,9 @@ TP1_CLOSE_PCT = 15.0     # 포지션의 15% 청산
 TP2_RATIO_OF_TP = 40.0
 TP2_CLOSE_PCT = 15.0     # 남은 포지션의 15%
 
-# 브레이크이븐 (시간 기준: 진입 후 N시간 경과 시 손절가를 진입가로 이동)
+# 브레이크이븐 (시간 기준: 진입 후 N분 경과 시 손절가를 진입가로 이동)
 ENABLE_BREAKEVEN = True
-# BREAKEVEN_HOURS = 250.0  # 진입 후 250시간 경과 시 브레이크이븐 (기존 500봉×30분 ≈ 250시간과 동일)
-BREAKEVEN_HOURS = 0.01
+BREAKEVEN_MINUTES = 500  # 진입 후 500분(약 8.3시간) 경과 시 브레이크이븐
 # 3연속 손절 스킵
 ENABLE_SKIP_AFTER_3_LOSSES = True
 
